@@ -1,0 +1,585 @@
+-[[
+    Srilangish Hub - Full Swagmode UI (Autofarm)
+    Hold LEFT click x2 for 4s each, stay 2s at CA$HIER
+]]
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+local player = Players.LocalPlayer
+
+local farming = false
+local webhookURL = ""
+
+local character, humanoid, root
+local function setupCharacter(newChar)
+    character = newChar
+    humanoid = newChar:WaitForChild("Humanoid")
+    root = newChar:WaitForChild("HumanoidRootPart")
+end
+if player.Character then
+    setupCharacter(player.Character)
+end
+player.CharacterAdded:Connect(setupCharacter)
+
+local HOLD_TIME = 4
+local HOLD_COUNT = 2
+local STAY_AFTER = 2
+local MONEYDROP_RADIUS = 55
+local DELAY_BETWEEN_CASHIERS = 0.35
+local VOID_Y = 500
+
+local startTime = tick()
+local startDHC = 0
+local visitedCount = 0
+
+-- ==================== FULL SWAGMODE UI ====================
+local Swagmode = Instance.new("ScreenGui")
+Swagmode.Name = "SrilangishHub"
+Swagmode.ResetOnSpawn = false
+Swagmode.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Swagmode.Parent = (gethui and gethui()) or CoreGui
+
+local SwagmodeFrame = Instance.new("Frame")
+SwagmodeFrame.Name = "SwagmodeFrame"
+SwagmodeFrame.Parent = Swagmode
+SwagmodeFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+SwagmodeFrame.BorderSizePixel = 0
+SwagmodeFrame.Position = UDim2.new(0.212884605, 0, 0.190036908, 0)
+SwagmodeFrame.Size = UDim2.new(0, 605, 0, 336)
+SwagmodeFrame.Active = true
+SwagmodeFrame.Draggable = true
+
+local MenuFrame = Instance.new("Frame")
+MenuFrame.Name = "MenuFrame"
+MenuFrame.Parent = SwagmodeFrame
+MenuFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MenuFrame.BorderSizePixel = 0
+MenuFrame.Size = UDim2.new(0, 155, 0, 336)
+
+local FarmButton = Instance.new("TextButton")
+FarmButton.Name = "FarmButton"
+FarmButton.Parent = MenuFrame
+FarmButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+FarmButton.BorderSizePixel = 0
+FarmButton.Position = UDim2.new(0.092, 0, 0.12, 0)
+FarmButton.Size = UDim2.new(0, 123, 0, 31)
+FarmButton.Font = Enum.Font.GothamBlack
+FarmButton.Text = "Farm"
+FarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FarmButton.TextSize = 14
+
+local Swagmode_2 = Instance.new("TextLabel")
+Swagmode_2.Name = "SwagmodeTitle"
+Swagmode_2.Parent = MenuFrame
+Swagmode_2.BackgroundTransparency = 1
+Swagmode_2.Position = UDim2.new(0.045161292, 0, 0, 0)
+Swagmode_2.Size = UDim2.new(0, 140, 0, 34)
+Swagmode_2.Font = Enum.Font.GothamBlack
+Swagmode_2.Text = "SRILANGISH HUB"
+Swagmode_2.TextColor3 = Color3.fromRGB(255, 255, 255)
+Swagmode_2.TextSize = 14
+
+local UIGradient = Instance.new("UIGradient")
+UIGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0.00, Color3.fromRGB(49, 48, 70)),
+    ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 255, 255))
+}
+UIGradient.Offset = Vector2.new(0.1, 0)
+UIGradient.Parent = Swagmode_2
+
+local Frame = Instance.new("Frame")
+Frame.Parent = MenuFrame
+Frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Frame.BorderSizePixel = 0
+Frame.Position = UDim2.new(0.045161292, 0, 0.092261903, 0)
+Frame.Size = UDim2.new(0, 126, 0, 3)
+
+local DropShadowHolder = Instance.new("Frame")
+DropShadowHolder.Name = "DropShadowHolder"
+DropShadowHolder.Parent = SwagmodeFrame
+DropShadowHolder.BackgroundTransparency = 1
+DropShadowHolder.BorderSizePixel = 0
+DropShadowHolder.Size = UDim2.new(1, 0, 1, 0)
+DropShadowHolder.ZIndex = 0
+
+local DropShadow = Instance.new("ImageLabel")
+DropShadow.Name = "DropShadow"
+DropShadow.Parent = DropShadowHolder
+DropShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+DropShadow.BackgroundTransparency = 1
+DropShadow.BorderSizePixel = 0
+DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+DropShadow.Size = UDim2.new(1, 47, 1, 47)
+DropShadow.ZIndex = 0
+DropShadow.Image = "rbxassetid://6015897843"
+DropShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+DropShadow.ImageTransparency = 0.2
+DropShadow.ScaleType = Enum.ScaleType.Slice
+DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
+
+local TopLine = Instance.new("Frame")
+TopLine.Name = "TopLine"
+TopLine.Parent = SwagmodeFrame
+TopLine.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+TopLine.BorderSizePixel = 0
+TopLine.Position = UDim2.new(0.256198347, 0, 0, 0)
+TopLine.Size = UDim2.new(0, 450, 0, 7)
+
+local SideInfo = Instance.new("Frame")
+SideInfo.Name = "SideInfo"
+SideInfo.Parent = SwagmodeFrame
+SideInfo.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+SideInfo.BorderSizePixel = 0
+SideInfo.Position = UDim2.new(0.778512418, 0, 0.020833334, 0)
+SideInfo.Size = UDim2.new(0, 134, 0, 329)
+
+local SideTitle = Instance.new("TextLabel")
+SideTitle.Parent = SideInfo
+SideTitle.BackgroundTransparency = 1
+SideTitle.Position = UDim2.new(0.05, 0, 0.02, 0)
+SideTitle.Size = UDim2.new(0, 120, 0, 24)
+SideTitle.Font = Enum.Font.GothamBlack
+SideTitle.Text = "FARM INFO"
+SideTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+SideTitle.TextSize = 13
+
+local SideTime = Instance.new("TextLabel")
+SideTime.Parent = SideInfo
+SideTime.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+SideTime.BorderSizePixel = 0
+SideTime.Position = UDim2.new(0.073, 0, 0.12, 0)
+SideTime.Size = UDim2.new(0, 115, 0, 28)
+SideTime.Font = Enum.Font.Gotham
+SideTime.Text = "Time: 00:00"
+SideTime.TextColor3 = Color3.fromRGB(200, 200, 200)
+SideTime.TextSize = 12
+
+local SideDHC = Instance.new("TextLabel")
+SideDHC.Parent = SideInfo
+SideDHC.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+SideDHC.BorderSizePixel = 0
+SideDHC.Position = UDim2.new(0.073, 0, 0.23, 0)
+SideDHC.Size = UDim2.new(0, 115, 0, 28)
+SideDHC.Font = Enum.Font.Gotham
+SideDHC.Text = "DHC: $0"
+SideDHC.TextColor3 = Color3.fromRGB(255, 200, 80)
+SideDHC.TextSize = 12
+
+local SideVisited = Instance.new("TextLabel")
+SideVisited.Parent = SideInfo
+SideVisited.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+SideVisited.BorderSizePixel = 0
+SideVisited.Position = UDim2.new(0.073, 0, 0.34, 0)
+SideVisited.Size = UDim2.new(0, 115, 0, 28)
+SideVisited.Font = Enum.Font.Gotham
+SideVisited.Text = "Visited: 0"
+SideVisited.TextColor3 = Color3.fromRGB(100, 200, 255)
+SideVisited.TextSize = 12
+
+local SideRate = Instance.new("TextLabel")
+SideRate.Parent = SideInfo
+SideRate.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+SideRate.BorderSizePixel = 0
+SideRate.Position = UDim2.new(0.073, 0, 0.45, 0)
+SideRate.Size = UDim2.new(0, 115, 0, 28)
+SideRate.Font = Enum.Font.Gotham
+SideRate.Text = "Rate: $0/m"
+SideRate.TextColor3 = Color3.fromRGB(150, 255, 150)
+SideRate.TextSize = 12
+
+local SideStatus = Instance.new("TextLabel")
+SideStatus.Parent = SideInfo
+SideStatus.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+SideStatus.BorderSizePixel = 0
+SideStatus.Position = UDim2.new(0.073, 0, 0.56, 0)
+SideStatus.Size = UDim2.new(0, 115, 0, 50)
+SideStatus.Font = Enum.Font.Gotham
+SideStatus.Text = "Status: Idle"
+SideStatus.TextColor3 = Color3.fromRGB(180, 180, 180)
+SideStatus.TextSize = 11
+SideStatus.TextWrapped = true
+
+local Buttons = Instance.new("Frame")
+Buttons.Name = "Buttons"
+Buttons.Parent = SwagmodeFrame
+Buttons.BackgroundTransparency = 1
+Buttons.Position = UDim2.new(0.256198347, 0, 0.0297619049, 0)
+Buttons.Size = UDim2.new(0, 316, 0, 325)
+
+local FarmFrame = Instance.new("Frame")
+FarmFrame.Name = "FarmFrame"
+FarmFrame.Parent = Buttons
+FarmFrame.BackgroundTransparency = 1
+FarmFrame.Size = UDim2.new(0, 316, 0, 325)
+FarmFrame.Visible = true
+
+local function CreateStyledButton(parent, name, text, pos, callback)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Parent = parent
+    btn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    btn.BorderSizePixel = 0
+    btn.Position = pos
+    btn.Size = UDim2.new(0, 94, 0, 46)
+    btn.Font = Enum.Font.GothamBlack
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 12
+    btn.TextWrapped = true
+
+    local colorStrip = Instance.new("TextLabel")
+    colorStrip.Name = name .. "Color"
+    colorStrip.Parent = btn
+    colorStrip.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    colorStrip.BorderSizePixel = 0
+    colorStrip.Size = UDim2.new(0, 94, 0, 5)
+    colorStrip.Text = ""
+
+    btn.MouseButton1Click:Connect(function()
+        local state = callback()
+        colorStrip.BackgroundColor3 = state and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    end)
+    return btn, colorStrip
+end
+
+local AutofarmBtn, AutofarmStrip = CreateStyledButton(FarmFrame, "Autofarm", "Autofarm", UDim2.new(0.025, 0, 0.04, 0), function()
+    farming = not farming
+    if farming then
+        startTime = tick()
+        startDHC = getDHC()
+        visitedCount = 0
+        SideStatus.Text = "Status: Starting..."
+        statusLabel.Text = "Status: Starting..."
+    else
+        SideStatus.Text = "Status: Paused"
+        statusLabel.Text = "Status: Paused"
+    end
+    return farming
+end)
+
+local function MakeStatLabel(text, y, color)
+    local lbl = Instance.new("TextLabel")
+    lbl.Parent = FarmFrame
+    lbl.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    lbl.BorderSizePixel = 0
+    lbl.Position = UDim2.new(0.025, 0, y, 0)
+    lbl.Size = UDim2.new(0, 290, 0, 28)
+    lbl.Font = Enum.Font.Gotham
+    lbl.Text = text
+    lbl.TextColor3 = color
+    lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    local pad = Instance.new("UIPadding", lbl)
+    pad.PaddingLeft = UDim.new(0, 8)
+    return lbl
+end
+
+local timeLabel = MakeStatLabel("Time Lapsed: 00:00", 0.22, Color3.fromRGB(200, 200, 200))
+local dhcLabel = MakeStatLabel("DHC Earned: $0", 0.33, Color3.fromRGB(255, 200, 80))
+local visitedLabel = MakeStatLabel("Cashiers Visited: 0", 0.44, Color3.fromRGB(100, 200, 255))
+local rateLabel = MakeStatLabel("Rate: $0 / min", 0.55, Color3.fromRGB(150, 255, 150))
+local statusLabel = MakeStatLabel("Status: Idle", 0.66, Color3.fromRGB(180, 180, 180))
+
+-- ==================== FARM LOGIC ====================
+local function formatTime(sec)
+    local m = math.floor(sec / 60)
+    local s = math.floor(sec % 60)
+    return string.format("%02d:%02d", m, s)
+end
+
+function getDHC()
+    local df = player:FindFirstChild("DataFolder")
+    if df then
+        local c = df:FindFirstChild("Currency")
+        if c then return c.Value end
+    end
+    return 0
+end
+
+task.spawn(function()
+    task.wait(1.5)
+    startDHC = getDHC()
+end)
+
+RunService.RenderStepped:Connect(function()
+    local elapsed = math.max(1, math.floor(tick() - startTime))
+    local earned = getDHC() - startDHC
+    local t = formatTime(elapsed)
+    local rate = math.floor(earned / (elapsed / 60))
+
+    timeLabel.Text = "Time Lapsed: " .. t
+    dhcLabel.Text = "DHC Earned: $" .. earned
+    visitedLabel.Text = "Cashiers Visited: " .. visitedCount
+    rateLabel.Text = "Rate: $" .. rate .. " / min"
+
+    SideTime.Text = "Time: " .. t
+    SideDHC.Text = "DHC: $" .. earned
+    SideVisited.Text = "Visited: " .. visitedCount
+    SideRate.Text = "Rate: $" .. rate .. "/m"
+
+    UIGradient.Rotation = (tick() * 75) % 360
+end)
+
+local function sendWebhook(titleText, description)
+    if not webhookURL or webhookURL == "" then return end
+    local data = {
+        embeds = {{
+            title = titleText,
+            description = description,
+            color = 65280,
+            footer = {text = "Srilangish Farm • " .. os.date("%X")}
+        }}
+    }
+    pcall(function()
+        local req = (syn and syn.request) or (http and http.request) or http_request or request
+        if req then
+            req({
+                Url = webhookURL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(data)
+            })
+        end
+    end)
+end
+
+pcall(function()
+    player.CameraMaxZoomDistance = 9999
+    player.CameraMinZoomDistance = 0.5
+end)
+player.CharacterAdded:Connect(function()
+    pcall(function()
+        player.CameraMaxZoomDistance = 9999
+        player.CameraMinZoomDistance = 0.5
+    end)
+end)
+
+local function findCombatInInventory()
+    if character then
+        for _, tool in ipairs(character:GetChildren()) do
+            if tool:IsA("Tool") and (tool.Name:lower():find("combat") or tool.Name == "[Combat]") then
+                return tool
+            end
+        end
+    end
+    local backpack = player:FindFirstChild("Backpack")
+    if backpack then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") and (tool.Name:lower():find("combat") or tool.Name == "[Combat]") then
+                return tool
+            end
+        end
+    end
+    return nil
+end
+
+local function equipCombat()
+    local combat = findCombatInInventory()
+    if combat and humanoid then
+        if combat.Parent ~= character then
+            humanoid:EquipTool(combat)
+        end
+        return true
+    end
+    return false
+end
+
+-- Hold LEFT click for duration while locked in front of cashier
+local function holdLeftClickInFront(model, duration)
+    local targetPart = model:IsA("BasePart") and model or (model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart"))
+    if not targetPart then return end
+
+    local start = tick()
+    pcall(function()
+        if mouse1press then
+            mouse1press()
+        else
+            VirtualUser:Button1Down(Vector2.new(), workspace.CurrentCamera.CFrame)
+        end
+    end)
+
+    while tick() - start < duration and farming do
+        if not character or not humanoid or humanoid.Health <= 0 or not root or not root.Parent then break end
+        local targetCFrame = targetPart.CFrame * CFrame.new(0, 0, -2.5) * CFrame.Angles(0, math.rad(180), 0)
+        root.CFrame = targetCFrame
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+        equipCombat()
+        pcall(function()
+            if mouse1press then
+                mouse1press()
+            else
+                VirtualUser:Button1Down(Vector2.new(), workspace.CurrentCamera.CFrame)
+            end
+        end)
+        RunService.Heartbeat:Wait()
+    end
+
+    pcall(function()
+        if mouse1release then
+            mouse1release()
+        else
+            VirtualUser:Button1Up(Vector2.new(), workspace.CurrentCamera.CFrame)
+        end
+    end)
+end
+
+function isCashierValid(obj)
+    if not obj or not obj.Parent or not obj:IsA("Model") then return false end
+    local part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+    if not part or not part.Parent or not part:IsDescendantOf(workspace) then return false end
+    if obj:GetAttribute("Broken") or obj:GetAttribute("Destroyed") then return false end
+    if part.Transparency >= 0.9 then return false end
+    return true
+end
+
+-- 2 left-click holds (4s each) + stay 2s
+local function attackCashier(model)
+    local targetPart = model:IsA("BasePart") and model or (model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart"))
+    if not targetPart then return end
+
+    for hold = 1, HOLD_COUNT do
+        if not farming or not humanoid or humanoid.Health <= 0 then break end
+        if not isCashierValid(model) then break end
+        statusLabel.Text = "Status: LMB Hold " .. hold .. "/" .. HOLD_COUNT .. " (4s)"
+        SideStatus.Text = "Status: Hold " .. hold .. "/" .. HOLD_COUNT
+        holdLeftClickInFront(model, HOLD_TIME)
+        task.wait(0.1)
+    end
+
+    statusLabel.Text = "Status: Staying 2s..."
+    SideStatus.Text = "Status: Staying 2s..."
+    local stayStart = tick()
+    while tick() - stayStart < STAY_AFTER and farming do
+        if not character or not humanoid or humanoid.Health <= 0 or not root or not root.Parent then break end
+        if not isCashierValid(model) then break end
+        local targetCFrame = targetPart.CFrame * CFrame.new(0, 0, -2.5) * CFrame.Angles(0, math.rad(180), 0)
+        root.CFrame = targetCFrame
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+        RunService.Heartbeat:Wait()
+    end
+end
+
+local function clickMoneyDrops()
+    if not root or not root.Parent then return end
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj.Name == "MoneyDrop" then
+            local part = obj:IsA("BasePart") and obj or (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart"))
+            if part and (part.Position - root.Position).Magnitude <= MONEYDROP_RADIUS then
+                for i = 1, 3 do
+                    pcall(function()
+                        firetouchinterest(root, part, 0)
+                        task.wait(0.015)
+                        firetouchinterest(root, part, 1)
+                    end)
+                    pcall(function()
+                        VirtualUser:CaptureController()
+                        VirtualUser:ClickButton1(Vector2.new())
+                    end)
+                    local detector = obj:FindFirstChildOfClass("ClickDetector") or part:FindFirstChildOfClass("ClickDetector")
+                    if detector then pcall(fireclickdetector, detector) end
+                    local prompt = obj:FindFirstChildOfClass("ProximityPrompt") or part:FindFirstChildOfClass("ProximityPrompt")
+                    if prompt then pcall(fireproximityprompt, prompt) end
+                    task.wait(0.015)
+                end
+            end
+        end
+    end
+end
+
+local function getCashiers()
+    local list = {}
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj.Name == "CA$HIER" and isCashierValid(obj) then
+            table.insert(list, obj)
+        end
+    end
+    return list
+end
+
+RunService.Stepped:Connect(function()
+    if humanoid and humanoid.Parent then
+        humanoid.Sit = false
+        humanoid.PlatformStand = false
+    end
+end)
+
+local function floatInVoid()
+    if not root or not root.Parent then return end
+    root.CFrame = CFrame.new(root.Position.X, VOID_Y, root.Position.Z)
+    root.AssemblyLinearVelocity = Vector3.zero
+    root.AssemblyAngularVelocity = Vector3.zero
+end
+
+task.spawn(function()
+    while true do
+        if not farming then
+            statusLabel.Text = "Status: Paused"
+            SideStatus.Text = "Status: Paused"
+            task.wait(0.4)
+        else
+            if not character or not humanoid or humanoid.Health <= 0 or not root or not root.Parent then
+                statusLabel.Text = "Status: Waiting for character..."
+                SideStatus.Text = "Status: Waiting char..."
+                task.wait(1)
+            elseif not equipCombat() then
+                statusLabel.Text = "Status: Waiting for Combat tool..."
+                SideStatus.Text = "Status: Need Combat"
+                task.wait(0.6)
+            else
+                local cashiers = getCashiers()
+                if #cashiers == 0 then
+                    statusLabel.Text = "Status: No Cashiers → Floating"
+                    SideStatus.Text = "Status: Floating"
+                    floatInVoid()
+                    task.wait(1.2)
+                else
+                    statusLabel.Text = "Status: Farming " .. #cashiers .. " Cashier(s)"
+                    SideStatus.Text = "Status: Farming " .. #cashiers
+                    for _, cashier in ipairs(cashiers) do
+                        if not farming or not humanoid or humanoid.Health <= 0 then break end
+                        if not isCashierValid(cashier) then continue end
+
+                        attackCashier(cashier)
+
+                        for i = 1, 6 do
+                            clickMoneyDrops()
+                            task.wait(0.1)
+                        end
+
+                        visitedCount += 1
+                        if visitedCount % 5 == 0 then
+                            sendWebhook(
+                                "Farm Progress",
+                                "**Cashiers Visited:** " .. visitedCount ..
+                                "\n**DHC Earned:** $" .. (getDHC() - startDHC) ..
+                                "\n**Time:** " .. formatTime(math.floor(tick() - startTime))
+                            )
+                        end
+                        task.wait(DELAY_BETWEEN_CASHIERS)
+                    end
+                end
+            end
+            task.wait(0.2)
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if farming and humanoid and humanoid.Health > 0 then
+            clickMoneyDrops()
+            equipCombat()
+        end
+        task.wait(0.3)
+    end
+end)
+
+print("[Srilangish] Autofarm Loaded (LMB hold)")
